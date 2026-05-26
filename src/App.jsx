@@ -11,7 +11,7 @@ function App() {
   const [gameMode, setGameMode] = useState(GAME_MODES.CPU)
   const [pendingMode, setPendingMode] = useState(null)
   const pendingJoinRoomId = useRef(null)
-  const { rooms, connected } = useRoomLobby()
+  const { rooms, connected, wsConfigured, connectionFailed } = useRoomLobby()
 
   const consumePendingJoinRoomId = useCallback(() => {
     const id = pendingJoinRoomId.current
@@ -84,6 +84,8 @@ function App() {
       <RoomQueue
         rooms={rooms}
         connected={connected}
+        wsConfigured={wsConfigured}
+        connectionFailed={connectionFailed}
         currentRoomId={session.currentRoomId}
         isOnline={isOnline}
         onJoinRoom={handleJoinRoom}

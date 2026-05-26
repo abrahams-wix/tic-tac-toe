@@ -26,12 +26,27 @@ export class MultiplayerModeHandler extends GameModeHandler {
   init(getStore, { joinRoomId = null } = {}) {
     this.getStore = getStore
     this.pendingJoinRoomId = joinRoomId
+
+    if (!WS_URL) {
+      getStore().setStatusMessage(
+        'Online play needs a game server. Set VITE_WS_URL and redeploy, or use npm run dev with npm run server.'
+      )
+      getStore().setMultiplayerPhase(null)
+      return
+    }
+
     this.ws = new WebSocket(WS_URL)
 
     this.ws.onopen = () => {
       this.connected = true
       this.sendJoin(this.pendingJoinRoomId)
       this.pendingJoinRoomId = null
+    }
+
+    this.ws.onerror = () => {
+      getStore().setStatusMessage(
+        'Cannot reach game server. Run npm run server locally, or set VITE_WS_URL for production.'
+      )
     }
 
     this.ws.onmessage = (event) => {

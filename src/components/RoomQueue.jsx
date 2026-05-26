@@ -6,9 +6,22 @@ function statusLabel(status) {
   return 'In play'
 }
 
+function lobbyHint({ wsConfigured, connected, connectionFailed }) {
+  if (!wsConfigured) {
+    return 'No WebSocket URL configured for this build.'
+  }
+  if (connected) return 'Who is in each room right now'
+  if (connectionFailed) {
+    return 'Cannot reach game server. Run npm run server locally, or check VITE_WS_URL in production.'
+  }
+  return 'Connecting to server…'
+}
+
 export default function RoomQueue({
   rooms,
   connected,
+  wsConfigured,
+  connectionFailed,
   currentRoomId,
   isOnline,
   onJoinRoom,
@@ -17,9 +30,7 @@ export default function RoomQueue({
     <aside className="room-queue" aria-label="Live game rooms">
       <h2 className="room-queue__title">Live rooms</h2>
       <p className="room-queue__hint">
-        {connected
-          ? 'Who is in each room right now'
-          : 'Connecting to server…'}
+        {lobbyHint({ wsConfigured, connected, connectionFailed })}
       </p>
 
       {rooms.length === 0 ? (

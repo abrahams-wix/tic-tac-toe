@@ -1,0 +1,17 @@
+# Render Blueprint — one Web Service: React build + WebSocket game server
+# https://render.com/docs/blueprint-spec
+#
+# Deploy: Dashboard → New → Blueprint → connect github.com/abrahams-wix/tic-tac-toe
+services:
+  - type: web
+    name: tic-tac-toe
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: "22"

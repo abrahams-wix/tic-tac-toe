@@ -1,10 +1,23 @@
-# WebSocket message protocol
+# WebSocket protocol reference
 
-All messages are JSON strings. Use `JSON.stringify` to send and `JSON.parse` on receive.
+This document describes the JSON message contract between the tic-tac-toe client and server. All payloads are UTF-8 JSON strings: use `JSON.stringify` when sending and `JSON.parse` when receiving.
 
-**Endpoint:** `ws://localhost:3046`
+| Item | Value |
+|------|--------|
+| **Transport** | WebSocket |
+| **Default endpoint** | `ws://localhost:3046` |
+| **Implementation** | [`protocol.js`](./protocol.js) — `messageType`, `errors`, `gameStatus`, `mark`, and `server*` / `client*` helpers |
 
-**Constants & builders:** [`protocol.js`](./protocol.js) — `messageType`, `errors`, `gameStatus`, `mark`, and `server*` / `client*` helpers.
+The client imports the same constants from `src/protocol.js` (re-export of `server/protocol.js`).
+
+---
+
+## Design principles
+
+- **Server authority** — The server owns room membership, turn order, and win/tie resolution for online games. Clients must not trust locally computed outcomes for multiplayer.
+- **Mark assignment** — The server assigns `X` / `O` from `playerIndex`. Clients send only a cell `index` on `move`, never a mark.
+- **Idempotent join** — A player already in a room who sends `join` again is removed from the current room first, then joined to the target (or matchmade).
+- **Lobby fan-out** — After connect, join, move, and disconnect, the server broadcasts `rooms_snapshot` to every connected client.
 
 ---
 
@@ -12,7 +25,7 @@ All messages are JSON strings. Use `JSON.stringify` to send and `JSON.parse` on 
 
 ### Game state (`state`)
 
-Sent on `joined`, `opponent_joined`, `state`, and `player_left`. Matches `GameRoom.toJSON()`.
+Included in `joined`, `opponent_joined`, `state`, and `player_left`. Shape matches `GameRoom.toJSON()`.
 
 ```json
 {
@@ -24,17 +37,55 @@ Sent on `joined`, `opponent_joined`, `state`, and `player_left`. Matches `GameRo
 }
 ```
 
-| Field | Type | Values |
-|-------|------|--------|
-| `id` | string | Room id |
-| `board` | `(null \| "X" \| "O")[]` | Length 9, indices 0–8 |
-| `turn` | string | `"X"` or `"O"` — whose turn it is |
-| `status` | string | `"play"` \| `"win"` \| `"tie"` |
-| `winner` | string \| null | `"X"` \| `"O"` when `status` is `"win"`, else `null` |
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | `string` | Opaque room identifier (UUID). |
+| `board` | `(null \| "X" \| "O")[]` | Nine cells, indices `0`–`8` (row-major). |
+| `turn` | `"X" \| "O"` | Active player for the next legal move. |
+| `status` | `"play" \| "win" \| "tie"` | Match phase. |
+| `winner` | `"X" \| "O" \| null` | Set when `status` is `"win"`; otherwise `null`. |
+
+### Lobby room entry
+
+Sent inside `rooms_snapshot`. Shape matches `GameRoom.toLobbyJSON()`.
+
+```json
+{
+  "id": "room-uuid",
+  "displayName": "Crimson Apple",
+  "shortId": "Crimson Apple",
+  "status": "play",
+  "waiting": true,
+  "joinable": true,
+  "turn": "X",
+  "players": [
+    {
+      "mark": "X",
+      "playerId": "player-uuid",
+      "displayName": "Gold Mango",
+      "label": "X · Gold Mango",
+      "occupied": true
+    },
+    {
+      "mark": "O",
+      "playerId": null,
+      "displayName": null,
+      "label": "O · open",
+      "occupied": false
+    }
+  ]
+}
+```
+
+| Field | Description |
+|-------|-------------|
+| `displayName` | Human-readable room label (`<color> <fruit>`). |
+| `waiting` | `true` when only one player is seated. |
+| `joinable` | `true` when the room accepts a second player (`waiting` and `status === "play"`). |
 
 ### Error
 
-Used for invalid JSON, unknown `type`, failed join, or rejected move.
+Returned for invalid JSON, unknown `type`, failed join, or rejected move.
 
 ```json
 {
@@ -43,32 +94,17 @@ Used for invalid JSON, unknown `type`, failed join, or rejected move.
 }
 ```
 
----
-
-## Lifecycle
-
-### 1. Connect
-
-**When:** WebSocket opens (automatic).
-
-**Server → client**
-
-```json
-{
-  "type": "connected",
-  "playerId": "player-uuid"
-}
-```
-
-Client is not in a room yet. Next step: send `join`.
+Common `message` values are defined in `errors` in [`protocol.js`](./protocol.js) (for example, `Room not found`, `Not your turn`, `Game is over`).
 
 ---
 
-### 2. Join
+## Client → server messages
 
-**When:** Client is ready to find or create a match.
+### `join`
 
-**Client → server**
+Enter matchmaking or join a specific room.
+
+**Matchmaking** (no `roomId`):
 
 ```json
 {
@@ -76,9 +112,64 @@ Client is not in a room yet. Next step: send `join`.
 }
 ```
 
-No `roomId`. Server either adds the player to a room waiting for an opponent or creates a new room.
+The server places the player in the first room with one vacant seat, or creates a new room.
 
-**Server → client (success)**
+**Targeted join**:
+
+```json
+{
+  "type": "join",
+  "roomId": "room-uuid"
+}
+```
+
+Fails with `error` if the room does not exist, is full, or the game is no longer in `"play"`.
+
+### `move`
+
+Submit a move for the authenticated player’s mark.
+
+```json
+{
+  "type": "move",
+  "index": 4
+}
+```
+
+| Field | Type | Constraints |
+|-------|------|-------------|
+| `index` | `number` | Integer `0`–`8` |
+
+Preconditions: player is in a room, `waiting` is `false`, `state.status` is `"play"`, and it is the player’s turn.
+
+---
+
+## Server → client messages
+
+### `connected`
+
+Sent immediately after the WebSocket handshake. The player is not in a room yet.
+
+```json
+{
+  "type": "connected",
+  "playerId": "player-uuid",
+  "displayName": "Silver Peach"
+}
+```
+
+| Field | Description |
+|-------|-------------|
+| `playerId` | Opaque connection identity (UUID). |
+| `displayName` | Assigned display name for this session. |
+
+**Client action:** Open a game connection flow or lobby-only listener; send `join` when entering online play.
+
+---
+
+### `joined`
+
+Acknowledges successful room assignment.
 
 ```json
 {
@@ -91,30 +182,19 @@ No `roomId`. Server either adds the player to a room waiting for an opponent or 
 }
 ```
 
-| Field | Type | Notes |
-|-------|------|--------|
-| `roomId` | string | Assigned by server |
-| `playerIndex` | number | `0` or `1` |
-| `mark` | string | `"X"` (index 0) or `"O"` (index 1) |
-| `waiting` | boolean | `true` until a second player joins |
-| `state` | object | Game state (see above) |
-
-**Server → client (failure)** — use `error`, not `joined`:
-
-```json
-{
-  "type": "error",
-  "message": "Already in a room"
-}
-```
+| Field | Type | Description |
+|-------|------|-------------|
+| `roomId` | `string` | Room the player joined. |
+| `playerIndex` | `0 \| 1` | Seat index. |
+| `mark` | `"X" \| "O"` | `X` for index `0`, `O` for index `1`. |
+| `waiting` | `boolean` | `true` until a second player joins. |
+| `state` | `object` | Current game state (see above). |
 
 ---
 
-### 3. Opponent joined
+### `opponent_joined`
 
-**When:** Second player sends `join` and lands in the same room.
-
-**Server → the player who was waiting**
+Sent to the player who was waiting when a second player joins.
 
 ```json
 {
@@ -124,32 +204,13 @@ No `roomId`. Server either adds the player to a room waiting for an opponent or 
 }
 ```
 
-**Server → the player who just joined** — they already received `joined` with `waiting: false`.
-
-Both clients can start sending `move` when `waiting` is `false`.
+Both players may send `move` once `waiting` is `false`.
 
 ---
 
-### 4. Move
+### `state`
 
-**When:** Player clicks a square (only after `waiting` is `false` and `state.status` is `"play"`).
-
-**Client → server**
-
-```json
-{
-  "type": "move",
-  "index": 4
-}
-```
-
-| Field | Type | Notes |
-|-------|------|--------|
-| `index` | number | Board cell `0`–`8` |
-
-Server derives mark from `playerIndex` (do not send `X`/`O` from the client).
-
-**Server → both players (success)**
+Broadcast to all players in the room after a valid move.
 
 ```json
 {
@@ -158,24 +219,13 @@ Server derives mark from `playerIndex` (do not send `X`/`O` from the client).
 }
 ```
 
-**Server → mover only (failure)**
-
-```json
-{
-  "type": "error",
-  "message": "Invalid move"
-}
-```
-
-Typical failure reasons: not your turn, cell taken, game over, or not in a room.
+Replace local board, turn, and outcome from `state`.
 
 ---
 
-### 5. Disconnect
+### `player_left`
 
-**When:** A player closes the tab or connection.
-
-**Server → remaining player**
+Sent when the other player disconnects.
 
 ```json
 {
@@ -185,51 +235,80 @@ Typical failure reasons: not your turn, cell taken, game over, or not in a room.
 }
 ```
 
-The leaving player's seat is cleared. UI may show “Opponent disconnected” and disable moves until they rejoin (rejoin not defined in v1).
+The vacated seat is cleared in `state`. The remaining client typically shows a waiting state until the opponent rejoins or the user leaves.
 
 ---
 
-## Flow summary
+### `rooms_snapshot`
+
+Lobby update broadcast to **every** connected client (including lobby-only connections).
+
+```json
+{
+  "type": "rooms_snapshot",
+  "rooms": [ ]
+}
+```
+
+`rooms` is an array of lobby room entries (see above). Emitted on connect, join, move, and disconnect.
+
+---
+
+## Session lifecycle
 
 ```
 Client                          Server
   | open                           |
   |<──────── connected ────────────|
+  |<──────── rooms_snapshot ───────|  (all connections)
   |──────── join ─────────────────>|
-  |<──────── joined (waiting?) ────|
+  |<──────── joined ───────────────|
+  |<──────── rooms_snapshot ───────|  (all connections)
   |                                |  (second client joins)
-  |<──────── opponent_joined ─────|  (first client only)
+  |<──────── opponent_joined ──────|  (waiting client)
   |──────── move { index } ───────>|
-  |<──────── state ────────────────|  (both clients)
-  |                                |
+  |<──────── state ────────────────|  (both clients in room)
+  |<──────── rooms_snapshot ───────|  (all connections)
   | close                          |
-  |              player_left ─────>|  (other client)
+  |              player_left ─────>|  (peer in room)
+  |<──────── rooms_snapshot ───────|  (all connections)
 ```
 
 ---
 
 ## Client handler checklist
 
-| `type` | Action |
-|--------|--------|
-| `connected` | Store `playerId`; send `{ "type": "join" }` |
-| `joined` | Store `roomId`, `playerIndex`, `mark`, `state`; show waiting UI if `waiting` |
-| `opponent_joined` | Set `waiting` false; update `state` |
-| `state` | Replace local board / turn / status from `state` |
-| `player_left` | Notify user; optionally lock board |
-| `error` | Show `message` |
+| `type` | Recommended handling |
+|--------|----------------------|
+| `connected` | Store `playerId` and `displayName`; optionally auto-send `join`. |
+| `joined` | Store `roomId`, `playerIndex`, `mark`, and `state`; show waiting UI when `waiting` is `true`. |
+| `opponent_joined` | Set `waiting` to `false`; sync `state`; prompt user to start play. |
+| `state` | Replace board, turn, status, and winner from `state`. |
+| `player_left` | Notify user; sync `state`; return to waiting UI if applicable. |
+| `rooms_snapshot` | Update lobby / room list UI. |
+| `error` | Surface `message`; do not assume partial state updates. |
 
 ---
 
-## Optional (later)
+## Error catalog
 
-**Join a specific room** (friend link):
+Defined in `errors` in [`protocol.js`](./protocol.js):
 
-```json
-{
-  "type": "join",
-  "roomId": "room-uuid"
-}
-```
+| Message | Typical cause |
+|---------|----------------|
+| `Invalid JSON` | Malformed payload |
+| `Unknown message type` | Unsupported `type` field |
+| `Room not found` | `join` with unknown `roomId` |
+| `Room is full` | No vacant seat |
+| `Could not join room` | Internal join failure |
+| `Join a room first` | `move` before `join` |
+| `Waiting for opponent` | `move` while alone in room |
+| `Invalid move` | Out-of-range index or occupied cell |
+| `Not your turn` | Move on wrong turn |
+| `Game is over` | Move after win or tie |
 
-Not required for random matchmaking.
+---
+
+## Versioning
+
+The protocol is not versioned in the wire format. Breaking changes should be coordinated with client and server deployments together. Document new message types or fields in this file when they are added.

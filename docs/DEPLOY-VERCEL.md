@@ -116,6 +116,16 @@ For production, deploy `server/` as a Node service (example: Render web service,
 - **Cause:** `VITE_WS_URL` missing, wrong, or game server not deployed.
 - **Fix:** Deploy `server/index.js` elsewhere; set `wss://` URL on Vercel; redeploy frontend.
 
+### Console: `WebSocket connection to 'ws://localhost:3046/' failed` (`ERR_CONNECTION_REFUSED`)
+
+- **Cause:** The production build on Vercel was connecting to **your laptop’s** `localhost`, not a real server. Browsers load the site from `games-*.vercel.app`, so `localhost:3046` is wrong unless you are developing locally.
+- **Fix (production):**
+  1. Deploy the game server (see `render.yaml` in the repo root → Render **New → Blueprint**).
+  2. Copy the Render URL (e.g. `wss://tic-tac-toe-ws.onrender.com` — use `wss://`, not `ws://`).
+  3. Vercel → Project → **Settings → Environment Variables** → `VITE_WS_URL` = that URL.
+  4. **Redeploy** the Vercel project (env vars are applied at build time).
+- **Fix (local dev):** In one terminal `npm run server`, in another `npm run dev` (not the Vercel URL).
+
 ### Deployed from `server/` subdirectory
 
 - **Fix:** Always run `vercel` from the repo root.

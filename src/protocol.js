@@ -1,4 +1,4 @@
-export { WS_URL } from './config/wsUrl.js'
+export { WS_URL, WS_CONFIGURED } from './config/wsUrl.js'
 export {
   messageType,
   clientJoin,

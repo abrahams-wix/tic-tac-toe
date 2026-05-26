@@ -117,22 +117,26 @@ games/
 
 | Target | What runs there |
 |--------|-----------------|
-| **Vercel** | React SPA only (`npm run build` → `dist/`) |
-| **Render / Railway / etc.** | WebSocket game server (`npm run server`) |
+| **Render (recommended)** | UI + WebSocket on **one URL** — see **[docs/DEPLOY-RENDER.md](./docs/DEPLOY-RENDER.md)** |
+| **Vercel** | React SPA only — online mode needs `VITE_WS_URL` pointing at a game server |
 
-The frontend does **not** use Express on Vercel. See **[docs/DEPLOY-VERCEL.md](./docs/DEPLOY-VERCEL.md)** for deploy commands, `VITE_WS_URL`, npm registry fixes, and troubleshooting (including differences from Express + `public/` projects).
+### Render (one link, full app)
 
-**Production (frontend):** https://games-tau-one.vercel.app
+1. Push to GitHub, then [Render Dashboard](https://dashboard.render.com) → **New** → **Blueprint** → connect `tic-tac-toe`.
+2. Render uses [`render.yaml`](./render.yaml): build `npm run build`, start `npm start`, health check `/health`.
+3. Open `https://<your-service>.onrender.com` — Local, CPU, and **Online** work on the same host (`wss://` same origin).
 
 ```bash
-# From repo root — frontend
-npx vercel --prod
-
-# Set in Vercel project settings, then redeploy:
-# VITE_WS_URL=wss://your-game-server.example.com
+# Local production smoke test
+npm run build && npm start
+# → http://localhost:3046
 ```
 
-Local and vs CPU work on Vercel without extra setup. Online mode needs a deployed WebSocket server and `VITE_WS_URL`.
+**Free tier:** service sleeps after ~15 min idle; first load can take 30–60s.
+
+### Vercel (UI only)
+
+See **[docs/DEPLOY-VERCEL.md](./docs/DEPLOY-VERCEL.md)**. Production UI: https://games-tau-one.vercel.app — set `VITE_WS_URL` to a Render `wss://` URL for multiplayer.
 
 ## Contributing
 

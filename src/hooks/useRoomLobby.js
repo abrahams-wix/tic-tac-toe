@@ -1,17 +1,24 @@
 import { useEffect, useRef, useState } from 'react'
-import { WS_URL, messageType } from '../protocol.js'
+import { WS_URL, WS_CONFIGURED, messageType } from '../protocol.js'
 
 /** Live room list for all modes — separate lightweight WebSocket. */
 export function useRoomLobby() {
   const [rooms, setRooms] = useState([])
   const [connected, setConnected] = useState(false)
+  const [connectionFailed, setConnectionFailed] = useState(false)
   const wsRef = useRef(null)
 
   useEffect(() => {
+    if (!WS_URL) return undefined
+
+    setConnectionFailed(false)
     const ws = new WebSocket(WS_URL)
     wsRef.current = ws
 
-    ws.onopen = () => setConnected(true)
+    ws.onopen = () => {
+      setConnected(true)
+      setConnectionFailed(false)
+    }
 
     ws.onmessage = (event) => {
       let msg
@@ -25,6 +32,10 @@ export function useRoomLobby() {
       }
     }
 
+    ws.onerror = () => {
+      setConnectionFailed(true)
+    }
+
     ws.onclose = () => {
       setConnected(false)
       setRooms([])
@@ -36,5 +47,10 @@ export function useRoomLobby() {
     }
   }, [])
 
-  return { rooms, connected }
+  return {
+    rooms,
+    connected,
+    wsConfigured: WS_CONFIGURED,
+    connectionFailed,
+  }
 }
