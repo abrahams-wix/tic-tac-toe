@@ -12,7 +12,7 @@ import { handleMove } from './handlers/move.js'
 import { handleDisconnect } from './handlers/disconnect.js'
 import { broadcastLobby } from './lobby.js'
 
-const PORT = 3046
+const PORT = Number(process.env.PORT) || 3046
 
 const gameServer = new WebSocketServer({ port: PORT })
 const games = new Map()

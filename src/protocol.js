@@ -1,5 +1,5 @@
+export { WS_URL } from './config/wsUrl.js'
 export {
-  WS_URL,
   messageType,
   clientJoin,
   clientMove,
