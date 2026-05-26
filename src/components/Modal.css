@@ -1,0 +1,102 @@
+.modal-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(12, 13, 18, 0.72);
+  backdrop-filter: blur(4px);
+  border-radius: 16px;
+}
+
+.modal-overlay--viewport {
+  position: fixed;
+  z-index: 100;
+  border-radius: 0;
+}
+
+.modal-panel {
+  width: min(100%, 18rem);
+  padding: 1.35rem 1.5rem;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+}
+
+.modal-panel__title {
+  font-family: 'Syne', sans-serif;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text);
+  margin-bottom: 0.5rem;
+}
+
+.modal-panel__message {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+}
+
+.modal-panel__message:last-child {
+  margin-bottom: 0;
+}
+
+.modal-panel__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.modal-panel__button {
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color 150ms ease, color 150ms ease, background 150ms ease;
+}
+
+.modal-panel__button:hover {
+  border-color: var(--border-hover);
+  color: var(--text);
+  background: var(--surface);
+}
+
+.modal-panel__button--primary {
+  border-color: var(--border-hover);
+  color: var(--text);
+  background: var(--surface);
+}
+
+.modal-panel__button--primary:hover {
+  background: var(--bg);
+}
+
+.modal-panel__winner {
+  font-family: 'Syne Mono', monospace;
+  font-size: 2rem;
+  line-height: 1;
+  margin-bottom: 0.35rem;
+}
+
+.modal-panel__winner--x {
+  color: var(--x-color);
+}
+
+.modal-panel__winner--o {
+  color: var(--o-color);
+}

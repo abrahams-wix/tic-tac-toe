@@ -1,0 +1,41 @@
+@keyframes board-cell-pop-in {
+  0%   { transform: scale(0.5); opacity: 0; }
+  65%  { transform: scale(1.15); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.board-cell {
+  width: var(--cell-size);
+  height: var(--cell-size);
+  border: none;
+  background: transparent;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+
+.board-cell:not(:last-child) {
+  border-right: 1px solid var(--border);
+}
+
+.board-cell:hover {
+  background: var(--surface-raised);
+}
+
+.board-cell__mark {
+  font-family: 'Syne Mono', monospace;
+  font-size: 1.75rem;
+  line-height: 1;
+  display: block;
+  animation: board-cell-pop-in 200ms ease-out;
+}
+
+.board-cell__mark--x {
+  color: var(--x-color);
+}
+
+.board-cell__mark--o {
+  color: var(--o-color);
+}

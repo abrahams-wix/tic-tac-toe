@@ -1,0 +1,27 @@
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Syne+Mono&family=Outfit:wght@400;500;600&display=swap');
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg: #0c0d12;
+  --surface: #151720;
+  --surface-raised: #1c1e2a;
+  --border: #252836;
+  --border-hover: #3a3d52;
+  --x-color: #ff7b7b;
+  --o-color: #63c5da;
+  --text: #e4e5f0;
+  --text-muted: #66688a;
+  --cell-size: 90px;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Outfit', sans-serif;
+  min-height: 100vh;
+}

@@ -1,0 +1,137 @@
+.room-queue {
+  width: min(100%, 15rem);
+  padding: 1.25rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  align-self: flex-start;
+}
+
+.room-queue__title {
+  margin: 0 0 0.25rem;
+  font-family: 'Syne', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+
+.room-queue__hint {
+  margin: 0 0 1rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.room-queue__empty {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.room-queue__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.room-queue__card {
+  padding: 0.65rem 0.75rem;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.room-queue__card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.45rem;
+}
+
+.room-queue__room-id {
+  font-family: 'Syne Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.room-queue__badge {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--text-muted);
+}
+
+.room-queue__badge--play {
+  color: var(--o-color);
+}
+
+.room-queue__badge--win,
+.room-queue__badge--tie {
+  color: var(--text-muted);
+}
+
+.room-queue__waiting {
+  margin: 0 0 0.35rem;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.room-queue__players {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.room-queue__player {
+  font-family: 'Syne Mono', monospace;
+  font-size: 0.78rem;
+  color: var(--text);
+}
+
+.room-queue__player--open {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.room-queue__join {
+  margin-top: 0.55rem;
+  width: 100%;
+  padding: 0.4rem 0.5rem;
+  font-family: 'Syne', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.room-queue__join:hover:not(:disabled) {
+  background: var(--surface-raised);
+  border-color: var(--text-muted);
+}
+
+.room-queue__join:disabled {
+  opacity: 0.55;
+  cursor: default;
+}

@@ -1,0 +1,56 @@
+.app-shell {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 1.25rem;
+  min-height: 100vh;
+  padding: 1.5rem;
+}
+
+.app-main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+@media (max-width: 720px) {
+  .app-shell {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+.mode-picker {
+  display: flex;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 4px;
+  gap: 2px;
+}
+
+.mode-picker button {
+  padding: 0.4rem 1.1rem;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 500;
+  border-radius: 7px;
+  letter-spacing: 0.02em;
+  transition: color 150ms ease, background 150ms ease;
+}
+
+.mode-picker button:hover {
+  color: var(--text);
+  background: var(--surface-raised);
+}
+
+.mode-picker button.active {
+  color: var(--text);
+  background: var(--surface-raised);
+  font-weight: 600;
+}
